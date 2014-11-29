@@ -45,7 +45,7 @@ import com.astuetz.pagerslidingtabstrip.R;
 
 public class PagerSlidingTabStrip extends HorizontalScrollView {
 
-	public interface IconTabProvider {
+    public interface IconTabProvider {
 		public int getPageIconResId(int position);
 	}
 
@@ -82,7 +82,15 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 
 	private int scrollOffset = 52;
 	private int indicatorHeight = 8;
-	private int underlineHeight = 2;
+    private float indicatorLength = -1;
+    private float indicatorRatio = 1;
+    /**
+     * 0 use exact indicatorLength;
+     * 1 use indicatorRatio
+     */
+    private int indicatorCalculateState = 0;
+
+    private int underlineHeight = 2;
 	private int dividerPadding = 12;
 	private int tabPadding = 24;
 	private int dividerWidth = 1;
@@ -334,8 +342,21 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 			lineRight = (currentPositionOffset * nextTabRight + (1f - currentPositionOffset) * lineRight);
 		}
 
-		canvas.drawRect(lineLeft, height - indicatorHeight, lineRight, height, rectPaint);
+        float tabLength = lineRight - lineLeft;
+        float dalta = 0;
+        if (indicatorCalculateState ==0) {
+            if (indicatorLength != -1) {
+                dalta = (tabLength - indicatorLength) / 2;
+            } else {
+                dalta = 0;
+                indicatorLength = tabLength;
+            }
+        }else{
+            dalta = tabLength*(1-indicatorRatio)/2;
+            indicatorLength = tabLength * indicatorRatio;
+        }
 
+        canvas.drawRect(lineLeft+dalta, height - indicatorHeight, lineRight-dalta, height, rectPaint);
 		// draw underline
 
 		rectPaint.setColor(underlineColor);
@@ -349,6 +370,33 @@ public class PagerSlidingTabStrip extends HorizontalScrollView {
 			canvas.drawLine(tab.getRight(), dividerPadding, tab.getRight(), height - dividerPadding, dividerPaint);
 		}
 	}
+
+    public void setIndicatorLength(float length){
+        indicatorCalculateState =0;
+        this.indicatorLength =length;
+    }
+    public float getIndicatorLength(){
+        return indicatorLength;
+    }
+
+    /**
+     * scale the indicator (it will center under the tab)
+     * @param ratio 0-1 determine the length scale of the tab
+     */
+    public void setIndicatorLengthScaleOfTab(float ratio){
+        indicatorCalculateState = 1;
+        if (ratio > 1){
+            ratio = 1;
+        }
+        if (ratio < 0){
+            ratio = 0;
+        }
+        this.indicatorRatio = ratio;
+    }
+
+    public float getIndicatorLengthScaleOfTab(){
+        return indicatorRatio;
+    }
 
 	private class PageListener implements OnPageChangeListener {
 
